@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Um pedido especial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg1:#ffd6e0; --bg2:#ff8fb1; --bg3:#c2185b;
+  --card:rgba(255,255,255,.82); --text:#5a1230; --accent:#e91e63; --accent2:#ad1457;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg1:#3a0a24; --bg2:#7b1650; --bg3:#d81b60;
+    --card:rgba(40,8,26,.78); --text:#ffe3ec; --accent:#ff4f86; --accent2:#ff80ab;
+  }
+}
+:root[data-theme="dark"]{
+  --bg1:#3a0a24; --bg2:#7b1650; --bg3:#d81b60;
+  --card:rgba(40,8,26,.78); --text:#ffe3ec; --accent:#ff4f86; --accent2:#ff80ab;
+}
+*,*::before,*::after{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{
+  font-family:'Quicksand',system-ui,sans-serif;
+  color:var(--text);
+  background:linear-gradient(160deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+  background-color:var(--bg2);
+  overflow:hidden;
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  user-select:none;-webkit-user-select:none;
+  touch-action:manipulation;
+}
+.card{
+  position:relative;z-index:5;
+  width:min(92vw,560px);
+  background:var(--card);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  border-radius:28px;
+  padding:clamp(22px,5vw,40px);
+  text-align:center;
+  box-shadow:0 20px 60px rgba(120,0,50,.35);
+  animation:pop .8s cubic-bezier(.2,1.2,.3,1) both;
+}
+@keyframes pop{from{opacity:0;transform:scale(.85) translateY(20px)}to{opacity:1;transform:none}}
+.big{font-size:clamp(40px,9vw,60px);animation:beat 1.2s infinite;display:inline-block}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.2)}30%{transform:scale(1)}45%{transform:scale(1.15)}}
+h1{
+  font-family:'Dancing Script',cursive,serif;
+  font-weight:600;
+  font-size:clamp(24px,5.6vw,34px);
+  line-height:1.35;margin:10px 0 28px;
+}
+.actions{display:flex;gap:18px;justify-content:center;align-items:center;min-height:64px;flex-wrap:wrap}
+button{
+  font:inherit;font-weight:700;font-size:20px;
+  border:0;border-radius:999px;cursor:pointer;
+  padding:14px 38px;
+  transition:transform .2s ease, box-shadow .2s ease;
+}
+#sim{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#fff;
+  box-shadow:0 8px 22px rgba(233,30,99,.45);
+  transform:scale(var(--s,1));
+}
+#sim:hover{box-shadow:0 10px 28px rgba(233,30,99,.65)}
+#nao{
+  background:#fff;color:#7a2a47;
+  box-shadow:0 6px 16px rgba(0,0,0,.18);
+  touch-action:none;
+}
+#nao.fugindo{position:fixed;z-index:50;transition:left .25s ease, top .25s ease}
+.final{display:none}
+.final.on{display:block;animation:pop .7s cubic-bezier(.2,1.2,.3,1) both}
+.final h2{font-family:'Dancing Script',cursive,serif;font-size:clamp(32px,8vw,48px);margin:8px 0}
+.final p{font-size:clamp(17px,4vw,20px);margin:0}
+/* corações */
+.fall,.burst{position:fixed;pointer-events:none;z-index:1;will-change:transform,opacity;line-height:1}
+.fall{top:-40px;animation:fall linear forwards}
+@keyframes fall{
+  to{transform:translate3d(var(--dx),calc(100vh + 80px),0) rotate(var(--rot))}
+}
+.burst{z-index:100;transform:translate(-50%,-50%);animation:burst .9s ease-out forwards}
+@keyframes burst{
+  0%{opacity:1;transform:translate(-50%,-50%) scale(.3)}
+  100%{opacity:0;transform:translate(calc(-50% + var(--bx)),calc(-50% + var(--by))) scale(1.2) rotate(var(--rot))}
+}
+@media (prefers-reduced-motion: reduce){
+  .big{animation:none}
+}
+</style>
+</head>
+<body>
+
+<main class="card" id="card">
+  <div id="pergunta">
+    <span class="big">💖</span>
+    <h1>Sei que falhei, mas hoje tento acertar e por isso mudo por você e por todos. Quero te pedir para ser a mulher da minha vida novamente e fazer dar certo. Você aceita essa loucura comigo, amor da minha vida?</h1>
+    <div class="actions" id="actions">
+      <button id="sim" type="button">Sim 💕</button>
+      <button id="nao" type="button">Não 💔</button>
+    </div>
+  </div>
+  <div class="final" id="final">
+    <span class="big">😍</span>
+    <h2>Ela disse sim! 💞</h2>
+    <p>Você me faz o homem mais feliz do mundo. Eu te amo! ❤️</p>
+  </div>
+</main>
+
+<script>
+(function(){
+  var HEARTS=['❤️','💖','💕','💗','💓','💘','🩷'];
+  var rnd=function(a,b){return a+Math.random()*(b-a)};
+  var pick=function(){return HEARTS[Math.floor(Math.random()*HEARTS.length)]};
+  var reduce=window.matchMedia&&window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* corações caindo */
+  function fall(){
+    if(document.hidden)return;
+    var h=document.createElement('span');
+    h.className='fall';
+    h.textContent=pick();
+    h.style.left=rnd(0,100)+'vw';
+    h.style.fontSize=rnd(16,40)+'px';
+    h.style.opacity=rnd(.5,.95);
+    h.style.setProperty('--dx',rnd(-80,80)+'px');
+    h.style.setProperty('--rot',rnd(-200,200)+'deg');
+    h.style.animationDuration=rnd(5,10)+'s';
+    h.addEventListener('animationend',function(){h.remove()});
+    document.body.appendChild(h);
+  }
+  setInterval(fall,reduce?900:320);
+  for(var i=0;i<10;i++)setTimeout(fall,i*120);
+
+  /* explosão de corações */
+  function burst(x,y,n){
+    n=n||14;
+    for(var i=0;i<n;i++){
+      var h=document.createElement('span');
+      h.className='burst';
+      h.textContent=pick();
+      var ang=Math.random()*Math.PI*2, d=rnd(60,170);
+      h.style.left=x+'px';h.style.top=y+'px';
+      h.style.fontSize=rnd(16,34)+'px';
+      h.style.setProperty('--bx',Math.cos(ang)*d+'px');
+      h.style.setProperty('--by',Math.sin(ang)*d+'px');
+      h.style.setProperty('--rot',rnd(-120,120)+'deg');
+      h.addEventListener('animationend',function(e){e.target.remove()});
+      document.body.appendChild(h);
+    }
+  }
+  document.addEventListener('pointerdown',function(e){burst(e.clientX,e.clientY,14)});
+
+  /* botão Não: desvia, mas nunca sai da tela */
+  var nao=document.getElementById('nao'),
+      sim=document.getElementById('sim'),
+      actions=document.getElementById('actions'),
+      holder=null,escapes=0;
+
+  function place(px,py){
+    var w=nao.offsetWidth,h=nao.offsetHeight,m=12;
+    var minX=m,maxX=Math.max(m,window.innerWidth-w-m);
+    var minY=m+(parseFloat(getComputedStyle(document.documentElement).paddingTop)||0);
+    var maxY=Math.max(minY,window.innerHeight-h-m-(parseFloat(getComputedStyle(document.documentElement).paddingBottom)||0));
+    var x,y,tries=0;
+    do{
+      x=rnd(minX,maxX);y=rnd(minY,maxY);tries++;
+      var cx=x+w/2,cy=y+h/2;
+      var far=(px==null)||Math.hypot(cx-px,cy-py)>140;
+    }while(!far&&tries<40);
+    nao.style.left=x+'px';nao.style.top=y+'px';
+  }
+  function dodge(e){
+    if(e&&e.cancelable)e.preventDefault();
+    var px=null,py=null;
+    if(e){
+      var t=(e.touches&&e.touches[0])||e;
+      px=t.clientX;py=t.clientY;
+    }
+    if(!nao.classList.contains('fugindo')){
+      holder=document.createElement('span');
+      holder.style.cssText='display:inline-block;width:'+nao.offsetWidth+'px;height:'+nao.offsetHeight+'px';
+      actions.insertBefore(holder,nao);
+      nao.classList.add('fugindo');
+    }
+    place(px,py);
+    escapes++;
+    sim.style.setProperty('--s',Math.min(1+escapes*0.06,1.7));
+  }
+  ['pointerenter','pointerdown','touchstart','mousedown','click','focus'].forEach(function(ev){
+    nao.addEventListener(ev,dodge,{passive:false});
+  });
+  window.addEventListener('resize',function(){
+    if(nao.classList.contains('fugindo'))place(null,null);
+  });
+
+  /* Sim */
+  sim.addEventListener('click',function(){
+    document.getElementById('pergunta').style.display='none';
+    document.getElementById('final').classList.add('on');
+    if(holder)holder.remove();
+    nao.style.display='none';
+    var n=0;
+    var iv=setInterval(function(){
+      burst(rnd(0,window.innerWidth),rnd(0,window.innerHeight),12);
+      if(++n>14)clearInterval(iv);
+    },220);
+  });
+})();
+</script>
+</body>
+</html>
